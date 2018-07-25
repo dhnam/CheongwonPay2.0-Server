@@ -27,9 +27,9 @@ public class CheongwonPayServer {
 
         try {// 사기거래탐지시스템(FDS)에서 이용할 남고, 여고 축제 시작시간을 Date타입으로 변환하여 저장한다.
             SimpleDateFormat dateFormat = new  SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
-            String strDate = "2016-09-23 09:00";
+            String strDate = "2018-09-07 09:00";
 			java.util.Date wTime = dateFormat.parse(strDate);
-			strDate = "2016-09-23 12:00";
+			strDate = "2018-09-07 12:00";
 			java.util.Date mTime = dateFormat.parse(strDate);
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -58,7 +58,7 @@ public class CheongwonPayServer {
 
 class User extends Thread{
     
-	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GetGoodsList = 5, OP_GetRefundList = 6, OP_Refund = 7, OP_ATD = 10, OP_EditGoods = 11, OP_DeleteGoods = 12, OP_EditPW = 13, OP_GetName = 14, OP_UserMatching = 15, OP_PURCHASE_RS_NoTime = 103, OP_PURCHASE_RS_OverLimit = 104, OP_PURCHASE_RS_UserNull = 106, OP_PURCHASE_RS_Success = 105;//통신시 이용하는 명령 코드(OP-Code)를 정수 데이터타입으로 저장한다.
+	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GetGoodsList = 5, OP_GetRefundList = 6, OP_Refund = 7, OP_ATD = 10, OP_EditGoods = 11, OP_DeleteGoods = 12, OP_EditPW = 13, OP_GetName = 14, OP_UserMatching = 15, OP_PURCHASE_RS_NoTime = 103, OP_PURCHASE_RS_OverLimit = 104, OP_PURCHASE_RS_UserNull = 106, OP_PURCHASE_RS_Success = 105, OP_BALANCE = 106;//통신시 이용하는 명령 코드(OP-Code)를 정수 데이터타입으로 저장한다.
     public static final String OP_GetGoodsListFin = "##";// 통신시 이용하는 명령 코드(OP-Code)를 문자 데이터타입으로 저장한다. 이 코드만 문자형으로 사용하는 이유는 아래에서 DataInputStream할 때 문자형으로 불러오기 때문이다
 
     String userName;
@@ -130,7 +130,7 @@ class User extends Thread{
              }
            
            if(readOPData == OP_LOGIN){// 로그인
-                try {
+                try {//로그인시 DataInputStream 형식이 ID:PW 형식이다.
                     readData = dis.readUTF();// 클라이언트가 보낸 ID, PW를 "readData"에 저장한다.
                     System.out.println("ID:PW : "+ readData);
                     // 받은 정보를 서버에서 처리할 수 있도록 각각 분리하여 저장한다.
@@ -188,9 +188,9 @@ class User extends Thread{
            }
 
            if(readOPData == OP_PURCHASE){// 거래, 출석체크
-              try {
+              try {//거래,출석체크시 User:Goods_Num 형식이다.
             	  readData = dis.readUTF();// 클라이언트가 보낸 데이터를 "readData"에 저장한다. User : Goods_num 형식
-            	  String User = readData.split(":")[0];
+            	  String User = readData.split(":")[0]; //바코드 데이터
                   int Goods_Num = Integer.parseInt(readData.split(":")[1]);
             	  System.out.println("User : " + User);
             	  System.out.println("Goods_Num : " + Goods_Num);
@@ -211,6 +211,7 @@ class User extends Thread{
                           }
                           // 잔액 추가 if문 입력
                           
+                                         
                           while (rs.next()) {
                              Balance = rs.getInt(1);
                              System.out.println("Balance : " + Balance);
@@ -278,10 +279,10 @@ class User extends Thread{
                             	  while (rs.next()) {
                             		  isChecked = true;
                             	  }
-                            	  if(!isChecked){// 이 동아리에서 이 학생이 출석체크 한적이 없을 때
+                            	  if(!isChecked){// 이 동아리에서 이 학생이 출석체크 한적이 없을 때 (필요성 의문?)
                             		  st.execute("INSERT INTO atd_history (User, Club_Num) VALUES ('"+User+"', "+Club_Num+")");
                             		  st.execute("UPDATE user set Visits=(Visits+1) Where User='"+User+"'");
-                            		  st.execute("UPDATE club set Visits=(Visits+1) where Club_Num='"+Club_Num+"'");
+                            		  st.execute("UPDATE club set Visits=(Visits+1) where Club_Num='"+Club_Num+"'");//필요성 의문?
                             	  }else{// 같은동아리에서 2회이상 출석체크 시도
                             		  
                             	  }
@@ -338,7 +339,7 @@ class User extends Thread{
                   if (st.execute("SELECT * FROM user where User='"+User+"'")) {// 바코드에 일치하는 학생데이터 불러오기
                 	  rs = st.getResultSet();
                   }
-                  /* 팔찌미등록시 X
+                  // 팔찌미등록시 X
                   if(!rs.next()){// 불러온 학생데이터가 없을 때
                 	  //User리스트에 추가
                 	  st.execute("INSERT INTO user (User) VALUES ('"+User+"')");
@@ -347,7 +348,7 @@ class User extends Thread{
                       }
                   }
                   rs.beforeFirst();
-*/
+                  
                   while (rs.next()) {
                 	  String str = rs.getInt("Balance") + ":" + rs.getInt("Visits") + ":";
                 	  
@@ -606,6 +607,23 @@ class User extends Thread{
                     Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+           
+           if(readOPData == OP_BALANCE) {
+        	   //잔액 충전시 코드
+        	   //user:wtbalance형식으로 dis;
+        	   try {
+        		   readData = dis.readUTF();
+        		   
+        		   String User = readData.split(":")[0];
+        		   String wtbalance = readData.split(":")[1];
+        		   
+        		   java.sql.Statement st = null;
+        		   ResultSet rs = null;
+        		   st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        	   }catch (IOException e) {
+        		   e.printStackTrace();
+        	   }
+           }
            
            if(readOPData == 1110){// exit
               try {
