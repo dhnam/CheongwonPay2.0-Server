@@ -1,4 +1,4 @@
-user : Balance, Visits, User(¹ÙÄÚµå), Club_Num, Name, Grade, Class, Number, School, Num
+user : Balance, Visits, User(ë°”ì½”ë“œ), Club_Num, Name, Grade, Class, Number, School, Num
 transactions : User, Club_Num, Goods_Num, Cancel, Price, Num
 club : Name, Income, Club_Num, Visits, PW
 goods : Goods_Num, Club_Num, Goods_Name, Price
