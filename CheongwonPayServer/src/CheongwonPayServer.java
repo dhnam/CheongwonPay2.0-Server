@@ -64,8 +64,8 @@ class User extends Thread {
 
 	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GET_GOODS_LIST = 5,
 			OP_GET_REFUND_LIST = 6, OP_REFUND = 7, OP_ATD = 10, OP_EDIT_GOODS = 11, OP_DELETE_GOODS = 12, OP_EDIT_PW = 13,
-			OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_BALANCE_CHARGE = 16, OP_PURCHASE_RS_NOTIME = 103, OP_PURCHASE_RS_OVERLIMIT = 104,
-			OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_CHARGE_RS_USERNULL = 107, OP_CHARGE_RS_SUCCESS = 108;// 통신시 이용하는 명령 코드(OP-Code)를 정수
+			OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_CHARGE = 16, OP_PURCHASE_RS_NOTIME = 103, OP_PURCHASE_RS_OVERLIMIT = 104,
+			OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_CHARGE_RS_USERNULL = 107, OP_CHARGE_RS_SUCCESS = 108, OP_EXIT = 1110;// 통신시 이용하는 명령 코드(OP-Code)를 정수
 																							// 데이터타입으로 저장한다.
 	public static final String OP_GET_GOODS_LIST_FIN = "##";// 통신시 이용하는 명령 코드(OP-Code)를 문자 데이터타입으로 저장한다. 이 코드만 문자형으로 사용하는
 															// 이유는 아래에서 DataInputStream할 때 문자형으로 불러오기 때문이다
@@ -650,7 +650,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_BALANCE_CHARGE) {
+			if (readOPData == OP_CHARGE) {
 				// 잔액 충전시 코드
 				// user:wtbalance형식으로 dis;
 				try {
@@ -669,7 +669,7 @@ class User extends Thread {
 					
 					if (User.equals("null")) {// 바코드데이터가 null일 때
 						dos.writeInt(OP_CHARGE_RS_USERNULL);
-					} else {
+					} else {//충전성공
 						st.execute("UPDATE user set Balance=(Balance+" + wtbalance + ") where User='" + User + "'");
 						dos.writeInt(OP_CHARGE_RS_SUCCESS);
 					}
@@ -681,7 +681,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == 1110) {// exit
+			if (readOPData == OP_EXIT) {// exit
 				try {
 					dos.close();
 				} catch (IOException e) {
