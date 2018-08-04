@@ -62,12 +62,12 @@ public class CheongwonPayServer {
 
 class User extends Thread {
 
-	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GetGoodsList = 5,
-			OP_GetRefundList = 6, OP_Refund = 7, OP_ATD = 10, OP_EditGoods = 11, OP_DeleteGoods = 12, OP_EditPW = 13,
-			OP_GetName = 14, OP_UserMatching = 15, OP_PURCHASE_RS_NoTime = 103, OP_PURCHASE_RS_OverLimit = 104,
-			OP_PURCHASE_RS_UserNull = 106, OP_PURCHASE_RS_Success = 105, OP_BALANCE = 106;// 통신시 이용하는 명령 코드(OP-Code)를 정수
+	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GET_GOODS_LIST = 5,
+			OP_GET_REFUND_LIST = 6, OP_REFUND = 7, OP_ATD = 10, OP_EDIT_GOODS = 11, OP_DELETE_GOODS = 12, OP_EDIT_PW = 13,
+			OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_BALANCE_CHARGE = 16, OP_PURCHASE_RS_NOTIME = 103, OP_PURCHASE_RS_OVERLIMIT = 104,
+			OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_CHARGE_RS_USERNULL = 107, OP_CHARGE_RS_SUCCESS = 108;// 통신시 이용하는 명령 코드(OP-Code)를 정수
 																							// 데이터타입으로 저장한다.
-	public static final String OP_GetGoodsListFin = "##";// 통신시 이용하는 명령 코드(OP-Code)를 문자 데이터타입으로 저장한다. 이 코드만 문자형으로 사용하는
+	public static final String OP_GET_GOODS_LIST_FIN = "##";// 통신시 이용하는 명령 코드(OP-Code)를 문자 데이터타입으로 저장한다. 이 코드만 문자형으로 사용하는
 															// 이유는 아래에서 DataInputStream할 때 문자형으로 불러오기 때문이다
 
 	String userName;
@@ -208,7 +208,7 @@ class User extends Thread {
 					int Balance = 0, Price = 0;// "Balance"는 잔액, "Price"는 상품가를 정수 데이터타입으로 저장한다.
 
 					if (User.equals("null")) {// 바코드데이터가 null일 때
-						dos.writeInt(OP_PURCHASE_RS_UserNull);
+						dos.writeInt(OP_PURCHASE_RS_USERNULL);
 					} else {
 						if (simplifiedFDS(School_Type)) {// 축제시간일 때
 							java.sql.Statement st = null;
@@ -237,7 +237,7 @@ class User extends Thread {
 							}
 
 							// 거래가능조건 잔액>=상품가
-							// 결제기능 주석화로 제거
+							// 결제기능 주석화로 제거 취소.
 							if (Balance >= Price) {
 								// 거래내역추가
 								st.execute("INSERT INTO transactions (User, Club_Num, Goods_Num) VALUES ('" + User
@@ -307,14 +307,14 @@ class User extends Thread {
 
 								}
 								// 거래성공
-								dos.writeInt(OP_PURCHASE_RS_Success);
+								dos.writeInt(OP_PURCHASE_RS_SUCCESS);
 								// 거래X 였던 부분
 							} else {
 								// 거래실패 잔액부족
-								dos.writeInt(OP_PURCHASE_RS_OverLimit);
+								dos.writeInt(OP_PURCHASE_RS_OVERLIMIT);
 							}
 						} else {// 축제시간 이외에 요청
-							dos.writeInt(OP_PURCHASE_RS_NoTime);
+							dos.writeInt(OP_PURCHASE_RS_NOTIME);
 						}
 					}
 				} catch (IOException e) {
@@ -399,7 +399,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_GetGoodsList) {// 상품목록불러오기 goodsnum,name,price주기
+			if (readOPData == OP_GET_GOODS_LIST) {// 상품목록불러오기 goodsnum,name,price주기
 				try {
 					java.sql.Statement st = null;
 					ResultSet rs = null;
@@ -416,7 +416,7 @@ class User extends Thread {
 																														// 상품가를
 																														// 전송
 					}
-					dos.writeUTF(OP_GetGoodsListFin);// 상품목록 전송종료OP전송
+					dos.writeUTF(OP_GET_GOODS_LIST_FIN);// 상품목록 전송종료OP전송
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (SQLException ex) {
@@ -424,7 +424,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_GetRefundList) {// get사용자결제목록 for refund time,goodsnum,name,price주기
+			if (readOPData == OP_GET_REFUND_LIST) {// get사용자결제목록 for refund time,goodsnum,name,price주기
 				try {
 					String User = dis.readUTF();// 바코드
 
@@ -441,7 +441,7 @@ class User extends Thread {
 					while (rs.next()) {
 						dos.writeUTF(rs.getString("Time") + ":" + rs.getString("Goods_Num"));
 					}
-					dos.writeUTF(OP_GetGoodsListFin);// 상품목록전송종료OP
+					dos.writeUTF(OP_GET_GOODS_LIST_FIN);// 상품목록전송종료OP
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (SQLException ex) {
@@ -449,7 +449,7 @@ class User extends Thread {
 				}
 
 			}
-			if (readOPData == OP_Refund) {// 결체취소 (+돈복구)
+			if (readOPData == OP_REFUND) {// 결체취소 (+돈복구)
 				try {
 					// 이거 넘버링으로
 					readData = dis.readUTF();// 거래 번호
@@ -525,7 +525,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_EditGoods) {// 상품목록변경
+			if (readOPData == OP_EDIT_GOODS) {// 상품목록변경
 				try {
 					readData = dis.readUTF();// 클라이언트가 보낸 상품고유번호, 상품명, 가격을 "readData"에 저장한다.
 
@@ -550,7 +550,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_DeleteGoods) {// 상품삭제
+			if (readOPData == OP_DELETE_GOODS) {// 상품삭제
 				try {
 					readData = dis.readUTF();// 클라이언트가 보낸 상품고유번호를 "readData"에 저장한다.
 					System.out.println(readData);
@@ -569,7 +569,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_EditPW) {// 패스워드 변경
+			if (readOPData == OP_EDIT_PW) {// 패스워드 변경
 				try {
 					readData = dis.readUTF();// 클라이언트가 보낸 변경할 패스워드를 "readData"에 저장한다.
 					System.out.println("after pw: " + readData);
@@ -586,7 +586,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_GetName) {// 이름조회
+			if (readOPData == OP_GET_NAME) {// 이름조회
 				try {
 					String User = dis.readUTF();// 클라이언트가 보낸 바코드을 "readData"에 저장한다.
 					System.out.println("User : " + readData);
@@ -615,7 +615,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_UserMatching) {// 유저매칭
+			if (readOPData == OP_USER_MATCHING) {// 유저매칭
 				try {
 					readData = dis.readUTF();// 클라이언트가 보낸 바코드, 학번, 학교구분 값을 "readData"에 저장한다.
 					// 받은 정보를 서버에서 처리할 수 있도록 각각 분리하여 저장한다.
@@ -650,7 +650,7 @@ class User extends Thread {
 				}
 			}
 
-			if (readOPData == OP_BALANCE) {
+			if (readOPData == OP_BALANCE_CHARGE) {
 				// 잔액 충전시 코드
 				// user:wtbalance형식으로 dis;
 				try {
@@ -660,13 +660,24 @@ class User extends Thread {
 					String wtbalance = readData.split(":")[1];
 
 					java.sql.Statement st = null;
-					ResultSet rs = null;
+					//ResultSet rs = null; 받아올 필요가 없으니 ResultSet은 필요 없을지도? 잘 모르겠음. 
 					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 							ResultSet.CONCUR_READ_ONLY);
+					
+					System.out.println("User : " + User);
+					System.out.println("Balance : " + wtbalance);
+					
+					if (User.equals("null")) {// 바코드데이터가 null일 때
+						dos.writeInt(OP_CHARGE_RS_USERNULL);
+					} else {
+						st.execute("UPDATE user set Balance=(Balance+" + wtbalance + ") where User='" + User + "'");
+						dos.writeInt(OP_CHARGE_RS_SUCCESS);
+					}
+					
 				} catch (IOException e) {
 					e.printStackTrace();
-				} catch (SQLException e) {
-					e.printStackTrace();
+				} catch (SQLException ex) {
+					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 				}
 			}
 
