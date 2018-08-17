@@ -128,7 +128,7 @@ class User extends Thread {
 			return;
 		}
 
-		String readData = null;// 받은 데이터를 문자 데이터타입으로 저장한다.
+		//String readData = null;// 받은 데이터를 문자 데이터타입으로 저장한다. -> 리팩토링 이후 사라짐
 		int readOPData = 0;// 받은 OP-Code를 정수 배열로 저장한다.
 
 		int Club_Num = 0;// 동아리 고유번호를 정수 배열로 저장한다.
@@ -139,14 +139,16 @@ class User extends Thread {
 		while (true) {
 			try {
 				readOPData = dis.readInt();
-				System.out.println("readOPData : " + readOPData);
+				System.out.print("readOPData : " + readOPData);
 			} catch (IOException e) {
 				e.printStackTrace();
 				break;
 			}
 
 			if (readOPData == OP_LOGIN) {// 로그인
+				System.out.println(" : OP_LOGIN");
 				try {
+
 					String Club_Name = null;
 					String data = dis.readUTF();
 					boolean isSuccess = dbHandler.login(data);
@@ -163,6 +165,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_PURCHASE) {// 거래, 출석체크
+				System.out.println(" : OP_PURCHASE");
 				try {
 					int result = dbHandler.purchase(dis.readUTF());
 					if (result != -1) {
@@ -174,6 +177,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_ADD_ITEM) {// 상품추가
+				System.out.println(" : OP_ADD_ITEM");
 				try {
 					dbHandler.addItem(dis.readUTF());
 				} catch (IOException e) {
@@ -182,6 +186,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_RF_BAL) {// 잔액, 출석수 조회 + User리스트에 없을경우(팔찌)추가
+				System.out.println(" : OP_RF_BAL");
 				try {
 					String result = dbHandler.getBalanceVisits(dis.readUTF());
 					if (result != null) {
@@ -193,6 +198,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_GET_GOODS_LIST) {// 상품목록불러오기 goodsnum,name,price주기
+				System.out.println(" : OP_GET_GOODS_LIST");
 				try {
 					String[] goodsList = dbHandler.getGoodsList();
 					for (String nextGood : goodsList) {
@@ -204,6 +210,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_GET_REFUND_LIST) {// get사용자결제목록 for refund time,goodsnum,name,price주기
+				System.out.println(" : OP_GET_REFUND_LIST");
 				try {
 					String[] refundList = dbHandler.getRefundList(dis.readUTF());
 					for (String nextList : refundList) {
@@ -215,7 +222,7 @@ class User extends Thread {
 
 			}
 			if (readOPData == OP_REFUND) {// 결체취소 (+돈복구)
-
+				System.out.println(" : OP_REFUND");
 				try {
 					int result = dbHandler.refund(dis.readUTF());
 					if (result != 0 && result != -1) {
@@ -227,6 +234,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_ATD) {// 출석체크 부원등록
+				System.out.println(" : OP_ATD");
 				try {
 					dbHandler.attendance(dis.readUTF());
 				} catch (IOException e) {
@@ -235,6 +243,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_EDIT_GOODS) {// 상품목록변경
+				System.out.println(" : OP_EDIT_GOODS");
 				try {
 					dbHandler.edit_goods(dis.readUTF());
 				} catch (IOException e) {
@@ -243,6 +252,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_DELETE_GOODS) {// 상품삭제
+				System.out.println(" : OP_DELETE_GOODS");
 				try {
 					dbHandler.delete_goods(dis.readUTF());
 					}
@@ -252,6 +262,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_EDIT_PW) {// 패스워드 변경
+				System.out.println(" : OP_EDIT_PW");
 				try {
 					dbHandler.edit_password(dis.readUTF());
 				} catch (IOException e) {
@@ -260,6 +271,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_GET_NAME) {// 이름조회
+				System.out.println(" : OP_GET_NAME");
 				try {
 					String result = dbHandler.get_username(dis.readUTF());
 					dos.writeUTF(result);
@@ -294,6 +306,7 @@ class User extends Thread {
 			 */
 
 			if (readOPData == OP_CHARGE) {
+				System.out.println(" : OP_CHARGE");
 				try {
 					int result = dbHandler.charge(dis.readUTF());
 					if (result != -1) {
@@ -305,6 +318,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_CHANGEINFO) {
+				System.out.println(" : OP_CHANGEINFO");
 				try {
 					dbHandler.change_info(dis.readUTF());
 				}
@@ -314,6 +328,7 @@ class User extends Thread {
 			}
 
 			if (readOPData == OP_EXIT) {// exit
+				System.out.println(" : OP_EXIT");
 				break;
 			}
 
