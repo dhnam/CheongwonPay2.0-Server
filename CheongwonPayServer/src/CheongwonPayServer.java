@@ -88,32 +88,6 @@ class User extends Thread {
 		socket = sc;
 	}
 
-	boolean simplifiedFDS(String School_Type) {// 사기거래탐지시스템(FDS) 축제시간의 경우 true, 축제시간이외의 경우 false를 반환.
-		// 현재시간 측정
-		long now = System.currentTimeMillis();
-		java.util.Date currentTime = new java.util.Date(now);
-
-		// 축제시간의 거래인지 확인
-		switch (School_Type) {
-		case "M":// 남고일 때
-			if (currentTime.compareTo(CheongwonPayServer.mTime) < 0) {
-				return false;
-			}
-			break;
-		case "W":// 여고일 때
-			if (currentTime.compareTo(CheongwonPayServer.wTime) < 0) {
-				return false;
-			}
-			break;
-		case "U":// 연합동아리일 때
-			if (currentTime.compareTo(CheongwonPayServer.wTime) < 0) {
-				return false;
-			}
-			break;
-		}
-		return true;
-	}
-
 	@Override
 	public void run() {
 
