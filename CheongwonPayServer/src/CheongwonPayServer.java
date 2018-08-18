@@ -105,8 +105,6 @@ class User extends Thread {
 		//String readData = null;// 받은 데이터를 문자 데이터타입으로 저장한다. -> 리팩토링 이후 사라짐
 		int readOPData = 0;// 받은 OP-Code를 정수 배열로 저장한다.
 
-		int Club_Num = 0;// 동아리 고유번호를 정수 배열로 저장한다.
-		String School_Type = null;// 학교구분(남고는 M, 여고는 W, 연합동아리는 U)을 문자 데이터타입으로 저장한다.
 		System.out.println("Socket Opened!");
 		CheongwonPayDB dbHandler = new CheongwonPayDB(userName);
 
@@ -229,7 +227,6 @@ class User extends Thread {
 				System.out.println(" : OP_DELETE_GOODS");
 				try {
 					dbHandler.delete_goods(dis.readUTF());
-					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -286,8 +283,8 @@ class User extends Thread {
 					if (result != -1) {
 						dos.writeInt(result);
 					}
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 
@@ -295,9 +292,8 @@ class User extends Thread {
 				System.out.println(" : OP_CHANGEINFO");
 				try {
 					dbHandler.change_info(dis.readUTF());
-				}
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 
@@ -838,36 +834,36 @@ class CheongwonPayDB {
 	
 			st.close();
 		} catch (SQLException ex) {
-			Logger.getLogger(User.class.getName()).isLoggable(Level.SEVERE, null, ex);
+			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		if (str == null) {
+		if (toReturn == null) {
 			toReturn = "lookup error!";
 		}
 		return toReturn;
 	}
 	
 	int charge(String readData) {
-		int toReturn = -1
+		int toReturn = -1;
 		try {
-			String User = readData.split(":")[0];
+			String user = readData.split(":")[0];
 			String wtbalance = readData.split(":")[1];// wtbalance가 충전될 가격.
 	
 			java.sql.Statement st = null;
 			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
 	
-			System.out.println("User : " + User);
+			System.out.println("User : " + user);
 			System.out.println("Balance : " + wtbalance);
 	
-			if (User.equals("null")) {// 바코드데이터가 null일 때
-				toReturn = User.OP_CHARGE_RS_USERNULL;
+			if (user.equals("null")) {// 바코드데이터가 null일 때
+				toReturn = User.OP_CHARGE_RS_SUCCESS;
 			} else {// 충전성공
-				st.execute("UPDATE user SET Balance=(Balance+" + wtbalance + ") WHERE User='" + User + "'");
+				st.execute("UPDATE user SET Balance=(Balance+" + wtbalance + ") WHERE User='" + user + "'");
 				toReturn = User.OP_CHARGE_RS_SUCCESS;
 			}
 			st.close();
 		} catch (SQLException ex) {
-			Logger.getLogger(User.class.getName()).isLoggable(Level.SEVERE, null, ex);
+			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return toReturn;
 	}
@@ -890,7 +886,7 @@ class CheongwonPayDB {
 	
 			st.close();
 		} catch (SQLException ex) {
-			Logger.getLogger(User.class.getName()).isLoggable(Level.SEVERE, null, ex);
+			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 }
