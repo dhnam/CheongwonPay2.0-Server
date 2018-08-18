@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.*;
@@ -26,9 +25,9 @@ public class CheongwonPayServer {
 
 		try {// 사기거래탐지시스템(FDS)에서 이용할 남고, 여고 축제 시작시간을 Date타입으로 변환하여 저장한다.
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
-			String strDate = "2018-09-07 09:00";
+			String strDate = /*"2018-09-07 09:00"*/"2018-08-18 22:57";
 			wTime = dateFormat.parse(strDate);
-			strDate = "2018-09-07 12:00";
+			strDate = /*"2018-09-07 12:00"*/"2018-08-18 22:57";
 			mTime = dateFormat.parse(strDate);
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -36,7 +35,7 @@ public class CheongwonPayServer {
 
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://localhost/cheongwonpaydb", "testuser", "testuserpassword");// DB서버(MySQL)주소와
+			con = DriverManager.getConnection("jdbc:mysql://localhost/cheongwonpaydb?useUnicode=true&characterEncoding=utf-8", "testuser", "testuserpassword");// DB서버(MySQL)주소와
 																														// 계정,
 																														// 패스워드
 			// DB연결
@@ -46,8 +45,6 @@ public class CheongwonPayServer {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-
-		java.sql.Statement str = null;
 
 		while (true) {
 			System.out.println("Waiting for client...");
@@ -66,8 +63,7 @@ class User extends Thread {
 			OP_GET_REFUND_LIST = 6, OP_REFUND = 7, OP_ATD = 10, OP_EDIT_GOODS = 11, OP_DELETE_GOODS = 12,
 			OP_EDIT_PW = 13, OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_CHARGE = 16, OP_CHANGEINFO = 17,
 			OP_REFUND_RS_ALREADY_REFUNDED = 101, OP_PURCHASE_RS_NOTIME = 103, OP_PURCHASE_RS_OVERLIMIT = 104,
-			OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_CHARGE_RS_USERNULL = 107,
-			OP_CHARGE_RS_SUCCESS = 108, OP_EXIT = 1110;// 통신시
+			OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_EXIT = 1110;// 통신시
 														// 이용하는
 														// 명령
 														// 코드(OP-Code)를
@@ -102,7 +98,7 @@ class User extends Thread {
 			return;
 		}
 
-		//String readData = null;// 받은 데이터를 문자 데이터타입으로 저장한다. -> 리팩토링 이후 사라짐
+		// String readData = null;// 받은 데이터를 문자 데이터타입으로 저장한다. -> 리팩토링 이후 사라짐
 		int readOPData = 0;// 받은 OP-Code를 정수 배열로 저장한다.
 
 		System.out.println("Socket Opened!");
@@ -279,10 +275,7 @@ class User extends Thread {
 			if (readOPData == OP_CHARGE) {
 				System.out.println(" : OP_CHARGE");
 				try {
-					int result = dbHandler.charge(dis.readUTF());
-					if (result != -1) {
-						dos.writeInt(result);
-					}
+					dbHandler.charge(dis.readUTF());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -364,11 +357,12 @@ class CheongwonPayDB {
 			String PW = readData.split(":")[1];
 
 			String club_name;
-			java.sql.Statement st = null;
+			java.sql.PreparedStatement st = null;
 			ResultSet rs = null;
-			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			st = CheongwonPayServer.con.prepareStatement("SELECT * FROM club WHERE Name=?");
+			st.setString(1, ID);
 
-			if (st.execute("SELECT * FROM club WHERE Name='" + ID + "'")) {// "ID"와 일치하는 데이터를 불러오기.
+			if (st.execute()) {// "ID"와 일치하는 데이터를 불러오기.
 				rs = st.getResultSet();
 			}
 
@@ -464,8 +458,8 @@ class CheongwonPayDB {
 					// 결제기능 주석화로 제거 취소.
 					if (Balance >= Price) {
 						// 거래내역추가
-						st.execute("INSERT INTO transactions (User, Club_Num, Goods_Num) VALUES ('" + student + "',"
-								+ Club_Num + "," + Goods_Num + ")");
+						st.execute("INSERT INTO transactions (User, Club_Num, Goods_Num, Price) VALUES ('" + student + "',"
+								+ Club_Num + "," + Goods_Num + "," + Price + ")");
 
 						// Balance차감
 						st.execute("UPDATE user SET Balance=(Balance-" + Price + ") WHERE User='" + student + "'");
@@ -475,7 +469,7 @@ class CheongwonPayDB {
 
 						//// 출석체크
 						// 사기거래탐지시스템(FDS) 10분이내에 중복 출석체크 제한
-						String LastCheckTime = null;
+						/*String LastCheckTime = null;
 						java.util.Date LastCheckT = null;
 
 						if (st.execute("SELECT Time FROM atd_history WHERE User='" + student + "'")) {
@@ -527,7 +521,7 @@ class CheongwonPayDB {
 							}
 						} else {// 10분이내에 여러번 출석체크 시도
 
-						}
+						}*/
 						// 거래성공
 						toReturn = User.OP_PURCHASE_RS_SUCCESS;
 						// 거래X 였던 부분
@@ -648,28 +642,38 @@ class CheongwonPayDB {
 		} catch (SQLException ex) {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
+		System.out.println(toReturn);
 		return toReturn.toArray(new String[toReturn.size()]);
 	}
 
 	String[] getRefundList(String readData) {
 		java.sql.Statement st = null;
 		ResultSet rs = null;
+		java.sql.Statement st2 = null;
+		ResultSet rs2 = null;
 		ArrayList<String> toReturn = new ArrayList<>();
 		try {
 
 			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			st2 = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
 			if (st.execute(
-					"SELECT * FROM transactions WHERE Club_Num='" + Club_Num + "' and User='" + readData + "'")) {
+					"SELECT * FROM transactions WHERE Club_Num=" + Club_Num + " and User='" + readData + "'")) {
 				rs = st.getResultSet();
 			}
 
 			while (rs.next()) {
-				toReturn.add(rs.getString("Time") + ":" + rs.getString("Goods_Num"));
+				int goods_num = rs.getInt("Goods_Num");
+				st2.execute("SELECE Goods_Name FROM goods WHERE Goods_Num=" + goods_num);
+				rs2 = st2.getResultSet();
+				rs2.next();
+				
+				toReturn.add(rs.getString("Time") + ":" + rs.getString("Goods_Num") + ":" + rs2.getString(1));
 			}
 			toReturn.add(User.OP_GET_GOODS_LIST_FIN);// 상품목록전송종료OP
 
 			st.close();
+			st2.close();
 		} catch (SQLException ex) {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -722,9 +726,10 @@ class CheongwonPayDB {
 				// Balance 복구
 				if (st.execute("UPDATE user SET Balance = (Balance-" + temp[2] + " WHERE User='" + temp[1] + "'"))
 					;
-				
-				//동아리 Income 감소
-				if (st.execute("UPDATE club SET Income = (Income-" + temp[2] + " WHERE Club_Num='" + Club_Num +"'"));
+
+				// 동아리 Income 감소
+				if (st.execute("UPDATE club SET Income = (Income-" + temp[2] + " WHERE Club_Num='" + Club_Num + "'"))
+					;
 
 				st.close();
 			} else {
@@ -794,15 +799,14 @@ class CheongwonPayDB {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
 	void edit_password(String readData) {
 		try {
 			System.out.println("after pw: " + readData);
-	
+
 			java.sql.Statement st = null;
-			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-	
+			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
 			st.execute("UPDATE club SET PW='" + readData + "' WHERE Club_Num='" + Club_Num + "'");// 패스워드를
 																									// 변경한다.
 			st.close();
@@ -810,28 +814,27 @@ class CheongwonPayDB {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
 	String get_username(String readData) {
 		String toReturn = null;
 		try {
 			System.out.println("User : " + readData);
-	
+
 			java.sql.Statement st = null;
 			ResultSet rs = null;
-			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-	
+			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
 			if (st.execute("SELECT Name FROM user WHERE User='" + readData + "'")) {// 바코드에 일치하는 학생명 불러오기
 				rs = st.getResultSet();
 			}
-	
+
 			while (rs.next()) {
 				String str = rs.getNString(1);
 				if (str != null) {// null이 아닐 때
 					toReturn = str;// 이름값을 전송한다.
 				}
 			}
-	
+
 			st.close();
 		} catch (SQLException ex) {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
@@ -841,52 +844,50 @@ class CheongwonPayDB {
 		}
 		return toReturn;
 	}
-	
-	int charge(String readData) {
-		int toReturn = -1;
+
+	void charge(String readData) {
 		try {
 			String user = readData.split(":")[0];
 			String wtbalance = readData.split(":")[1];// wtbalance가 충전될 가격.
-	
+
 			java.sql.Statement st = null;
-			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-	
+			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
 			System.out.println("User : " + user);
 			System.out.println("Balance : " + wtbalance);
-	
+
 			if (user.equals("null")) {// 바코드데이터가 null일 때
-				toReturn = User.OP_CHARGE_RS_SUCCESS;
+				return;
 			} else {// 충전성공
 				st.execute("UPDATE user SET Balance=(Balance+" + wtbalance + ") WHERE User='" + user + "'");
-				toReturn = User.OP_CHARGE_RS_SUCCESS;
 			}
 			st.close();
 		} catch (SQLException ex) {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		return toReturn;
 	}
-	
+
 	void change_info(String readData) {
 		try {
 			String User = readData.split(":")[0];
 			String newName = readData.split(":")[1];
+			System.out.println("name = " + newName);
 			String newSchool = readData.split(":")[2];
 			int newGrade = Integer.parseInt(readData.split(":")[3]);
 			int newClass = Integer.parseInt(readData.split(":")[4]);
 			int newNumber = Integer.parseInt(readData.split(":")[5]);
-	
+
 			java.sql.Statement st = null;
-			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-	
-			st.executeQuery("UPDATE user SET Name='" + newName + "', School='" + newSchool + "',Grade="
-					+ newGrade + ",Class=" + newClass + ",Number=" + newNumber + "WHERE User='" + User + "'");
-	
+			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+			st.execute("UPDATE user SET Name='" + newName + "', School='" + newSchool + "',Grade=" + newGrade
+					+ ",Class=" + newClass + ",Number=" + newNumber + " WHERE User='" + User + "'");
+
 			st.close();
 		} catch (SQLException ex) {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 }
+
+//TODO 출석체크 시스템을 모조리 지워버린다면?
