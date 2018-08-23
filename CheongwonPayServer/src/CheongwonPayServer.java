@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.*;
@@ -12,8 +11,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class CheongwonPayServer {
-	public static final int port = 923;// ¼­¹ö Æ÷Æ®¸¦ ÁöÁ¤ÇØÁÖ¾ú´Ù.
-	public static ArrayList<User> userList;// Á¢¼Ó Å¬¶óÀÌ¾ğÆ® µğ¹ÙÀÌ½º¸¦ ¹è¿­·Î ÀúÀåÇÑ´Ù.
+	public static final int port = 923;// ì„œë²„ í¬íŠ¸ë¥¼ ì§€ì •í•´ì£¼ì—ˆë‹¤.
+	public static ArrayList<User> userList;// ì ‘ì† í´ë¼ì´ì–¸íŠ¸ ë””ë°”ì´ìŠ¤ë¥¼ ë°°ì—´ë¡œ ì €ì¥í•œë‹¤.
 	public static Connection con = null;
 	public static java.util.Date mTime, wTime;
 
@@ -24,22 +23,17 @@ public class CheongwonPayServer {
 		userList = new ArrayList<User>();
 		server = new ServerSocket(port);
 
-		try {// »ç±â°Å·¡Å½Áö½Ã½ºÅÛ(FDS)¿¡¼­ ÀÌ¿ëÇÒ ³²°í, ¿©°í ÃàÁ¦ ½ÃÀÛ½Ã°£À» DateÅ¸ÀÔÀ¸·Î º¯È¯ÇÏ¿© ÀúÀåÇÑ´Ù.
+		try {// ì‚¬ê¸°ê±°ë˜íƒì§€ì‹œìŠ¤í…œ(FDS)ì—ì„œ ì´ìš©í•  ë‚¨ê³ , ì—¬ê³  ì¶•ì œ ì‹œì‘ì‹œê°„ì„ Dateíƒ€ì…ìœ¼ë¡œ ë³€í™˜í•˜ì—¬ ì €ì¥í•œë‹¤.
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
-			String strDate = "2018-09-07 09:00";
-			java.util.Date wTime = dateFormat.parse(strDate);
-			strDate = "2018-09-07 12:00";
-			java.util.Date mTime = dateFormat.parse(strDate);
+
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://localhost/cheongwonpaydb", "testuser", "testuserpassword");// DB¼­¹ö(MySQL)ÁÖ¼Ò¿Í
-																														// °èÁ¤,
-																														// ÆĞ½º¿öµå
-			// DB¿¬°á
+
+			// DBì—°ê²°
 		} catch (SQLException sqex) {
 			System.out.println("SQLException: " + sqex.getMessage());
 			System.out.println("SQLState: " + sqex.getSQLState());
@@ -47,58 +41,33 @@ public class CheongwonPayServer {
 			e.printStackTrace();
 		}
 
-		java.sql.Statement str = null;
 
 		while (true) {
 			System.out.println("Waiting for client...");
 			newClient = server.accept();
 			newUser = new User("unknown", newClient);
-			newUser.start();// À¯Àú Á¢¼Ó½Ã À¯Àú¸¦ ArrayList¿¡ Ãß°¡
-			userList.add(new User("unknown", newClient));
-		}
-	}
-	// ¼­¹ö ½ÃÀÛ ¹× ¿î¿µÆÄÆ® ³¡
-}
+			newUser.start();// ìœ ì € ì ‘ì†ì‹œ ìœ ì €ë¥¼ ArrayListì— ì¶”ê°€
 
-class User extends Thread {
-
-	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GET_GOODS_LIST = 5,
-			OP_GET_REFUND_LIST = 6, OP_REFUND = 7, OP_ATD = 10, OP_EDIT_GOODS = 11, OP_DELETE_GOODS = 12, OP_EDIT_PW = 13,
-			OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_BALANCE_CHARGE = 16, OP_PURCHASE_RS_NOTIME = 103, OP_PURCHASE_RS_OVERLIMIT = 104,
-			OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_CHARGE_RS_USERNULL = 107, OP_CHARGE_RS_SUCCESS = 108;// Åë½Å½Ã ÀÌ¿ëÇÏ´Â ¸í·É ÄÚµå(OP-Code)¸¦ Á¤¼ö
-																							// µ¥ÀÌÅÍÅ¸ÀÔÀ¸·Î ÀúÀåÇÑ´Ù.
-	public static final String OP_GET_GOODS_LIST_FIN = "##";// Åë½Å½Ã ÀÌ¿ëÇÏ´Â ¸í·É ÄÚµå(OP-Code)¸¦ ¹®ÀÚ µ¥ÀÌÅÍÅ¸ÀÔÀ¸·Î ÀúÀåÇÑ´Ù. ÀÌ ÄÚµå¸¸ ¹®ÀÚÇüÀ¸·Î »ç¿ëÇÏ´Â
-															// ÀÌÀ¯´Â ¾Æ·¡¿¡¼­ DataInputStreamÇÒ ¶§ ¹®ÀÚÇüÀ¸·Î ºÒ·¯¿À±â ¶§¹®ÀÌ´Ù
-
-	String userName;
-	Socket socket;
-
-	DataInputStream dis;
-	DataOutputStream dos;
-
-	public User(String s, Socket sc) {
-		userName = s;
-		socket = sc;
 	}
 
-	boolean simplifiedFDS(String School_Type) {// »ç±â°Å·¡Å½Áö½Ã½ºÅÛ(FDS) ÃàÁ¦½Ã°£ÀÇ °æ¿ì true, ÃàÁ¦½Ã°£ÀÌ¿ÜÀÇ °æ¿ì false¸¦ ¹İÈ¯.
-		// ÇöÀç½Ã°£ ÃøÁ¤
+	boolean simplifiedFDS(String School_Type) {// ì‚¬ê¸°ê±°ë˜íƒì§€ì‹œìŠ¤í…œ(FDS) ì¶•ì œì‹œê°„ì˜ ê²½ìš° true, ì¶•ì œì‹œê°„ì´ì™¸ì˜ ê²½ìš° falseë¥¼ ë°˜í™˜.
+		// í˜„ì¬ì‹œê°„ ì¸¡ì •
 		long now = System.currentTimeMillis();
 		java.util.Date currentTime = new java.util.Date(now);
 
-		// ÃàÁ¦½Ã°£ÀÇ °Å·¡ÀÎÁö È®ÀÎ
+		// ì¶•ì œì‹œê°„ì˜ ê±°ë˜ì¸ì§€ í™•ì¸
 		switch (School_Type) {
-		case "M":// ³²°íÀÏ ¶§
+		case "M":// ë‚¨ê³ ì¼ ë•Œ
 			if (currentTime.compareTo(CheongwonPayServer.mTime) < 0) {
 				return false;
 			}
 			break;
-		case "W":// ¿©°íÀÏ ¶§
+		case "W":// ì—¬ê³ ì¼ ë•Œ
 			if (currentTime.compareTo(CheongwonPayServer.wTime) < 0) {
 				return false;
 			}
 			break;
-		case "U":// ¿¬ÇÕµ¿¾Æ¸®ÀÏ ¶§
+		case "U":// ì—°í•©ë™ì•„ë¦¬ì¼ ë•Œ
 			if (currentTime.compareTo(CheongwonPayServer.wTime) < 0) {
 				return false;
 			}
@@ -107,593 +76,10 @@ class User extends Thread {
 		return true;
 	}
 
-	@Override
-	public void run() {
-
-		try {
-
-			dis = new DataInputStream(socket.getInputStream());
-			dos = new DataOutputStream(socket.getOutputStream());
-
-		} catch (IOException ex) {
-			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-			CheongwonPayServer.userList.remove(this);
-			this.stop();
-		}
-
-		String readData = null;// ¹ŞÀº µ¥ÀÌÅÍ¸¦ ¹®ÀÚ µ¥ÀÌÅÍÅ¸ÀÔÀ¸·Î ÀúÀåÇÑ´Ù.
-		int readOPData = 0;// ¹ŞÀº OP-Code¸¦ Á¤¼ö ¹è¿­·Î ÀúÀåÇÑ´Ù.
-
-		int Club_Num = 0;// µ¿¾Æ¸® °íÀ¯¹øÈ£¸¦ Á¤¼ö ¹è¿­·Î ÀúÀåÇÑ´Ù.
-		String School_Type = null;// ÇĞ±³±¸ºĞ(³²°í´Â M, ¿©°í´Â W, ¿¬ÇÕµ¿¾Æ¸®´Â U)À» ¹®ÀÚ µ¥ÀÌÅÍÅ¸ÀÔÀ¸·Î ÀúÀåÇÑ´Ù.
-		System.out.println("Socket Opened!");
-
-		while (true) {
-			try {
-				readOPData = dis.readInt();
-				System.out.println("readOPData : " + readOPData);
-			} catch (IOException e) {
-				e.printStackTrace();
-				CheongwonPayServer.userList.remove(this);
-				stop();
-			}
-
-			if (readOPData == OP_LOGIN) {// ·Î±×ÀÎ
-				try {// ·Î±×ÀÎ½Ã DataInputStream Çü½ÄÀÌ ID:PW Çü½ÄÀÌ´Ù.
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ ID, PW¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù.
-					System.out.println("ID:PW : " + readData);
-					// ¹ŞÀº Á¤º¸¸¦ ¼­¹ö¿¡¼­ Ã³¸®ÇÒ ¼ö ÀÖµµ·Ï °¢°¢ ºĞ¸®ÇÏ¿© ÀúÀåÇÑ´Ù.
-					String ID = readData.split(":")[0];
-					String PW = readData.split(":")[1];
 
 					java.sql.Statement st = null;
 					ResultSet rs = null;
 					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 							ResultSet.CONCUR_READ_ONLY);
 
-					if (st.execute("SELECT * FROM club where Name='" + ID + "'")) {// "ID"¿Í ÀÏÄ¡ÇÏ´Â µ¥ÀÌÅÍ¸¦ ºÒ·¯¿À±â.
-						rs = st.getResultSet();
-					}
 
-					String password = null, Club_Name = null;// "password"Àº ¿ÇÀº ÆĞ½º¿öµå, "Club_Name"Àº µ¿¾Æ¸®¸íÀ» ¹®ÀÚ µ¥ÀÌÅÍÅ¸ÀÔÀ¸·Î ÀúÀåÇÑ´Ù.
-
-					while (rs.next()) {
-						// ¿ÇÀº ÆĞ½º¿öµå ºÒ·¯¿À±â
-						password = rs.getString("PW");
-						System.out.println("realPW : " + password);
-
-						// µ¿¾Æ¸® ÀÌ¸§ ºÒ·¯¿À±â
-						Club_Name = rs.getString("Name");
-						System.out.println("Club_Name : " + Club_Name);
-
-						// µ¿¾Æ¸®°íÀ¯¹øÈ£ÀúÀå
-						Club_Num = rs.getInt("Club_Num");
-						System.out.println("Club_Num : " + Club_Num);
-
-						// µ¿¾Æ¸® ¼Ò¼Ó ÇĞ±³±¸ºĞ ÀúÀå
-						School_Type = rs.getString("School");
-						System.out.println("School_Type : " + Club_Name);
-					}
-
-					if (password != null && password.equals(PW)) {// ·Î±×ÀÎ¼º°øÇßÀ»¶§
-						dos.writeUTF("Login Success!"); // DataOutputStream¿¡ ÀÔ·Â Å¬¶óÀÌ¾ğÆ®·Î µÇµ¹·Á º¸³¿
-						System.out.println("Login Success!");
-						// µ¿¾Æ¸® ÀÌ¸§ Àü¼Û
-						dos.writeUTF(Club_Name);
-
-					} else {// ·Î±×ÀÎ ½ÇÆĞ
-						dos.writeUTF("Login Failed!"); // DataOutputStream¿¡ ÀÔ·Â Å¬¶óÀÌ¾ğÆ®·Î µÇµ¹·Á º¸³¿
-						System.out.println("Login Failed!");
-						System.out.println("password : " + password);
-						System.out.println("PW : " + PW);
-
-					}
-
-				} catch (IOException ex) {// ¼ÒÄÏÀ¸·Î Åë½Å Áß ¿À·ù°¡ »ı°åÀ» ¶§ ·Î±× ±â·Ï
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				} catch (SQLException sqex) {// SQLÅë½Å Áß ¿À·ù°¡ »ı°åÀ» ¶§ ·Î±× ±â·Ï
-					System.out.println("SQLException: " + sqex.getMessage());
-					System.out.println("SQLState: " + sqex.getSQLState());
-				}
-			}
-
-			if (readOPData == OP_PURCHASE) {// °Å·¡, Ãâ¼®Ã¼Å©
-				try {// °Å·¡,Ãâ¼®Ã¼Å©½Ã User:Goods_Num Çü½ÄÀÌ´Ù.
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ µ¥ÀÌÅÍ¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù. User : Goods_num Çü½Ä
-					String User = readData.split(":")[0]; // ¹ÙÄÚµå µ¥ÀÌÅÍ
-					int Goods_Num = Integer.parseInt(readData.split(":")[1]);
-					System.out.println("User : " + User);
-					System.out.println("Goods_Num : " + Goods_Num);
-
-					int Balance = 0, Price = 0;// "Balance"´Â ÀÜ¾×, "Price"´Â »óÇ°°¡¸¦ Á¤¼ö µ¥ÀÌÅÍÅ¸ÀÔÀ¸·Î ÀúÀåÇÑ´Ù.
-
-					if (User.equals("null")) {// ¹ÙÄÚµåµ¥ÀÌÅÍ°¡ nullÀÏ ¶§
-						dos.writeInt(OP_PURCHASE_RS_USERNULL);
-					} else {
-						if (simplifiedFDS(School_Type)) {// ÃàÁ¦½Ã°£ÀÏ ¶§
-							java.sql.Statement st = null;
-							ResultSet rs = null;
-							st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-									ResultSet.CONCUR_READ_ONLY);
-
-							// ÀÜ¾×Á¶È¸
-							if (st.execute("SELECT Balance FROM user where User='" + User + "'")) {
-								rs = st.getResultSet();
-							}
-							// ÀÜ¾× Ãß°¡ if¹® ÀÔ·Â
-
-							while (rs.next()) {
-								Balance = rs.getInt(1);
-								System.out.println("Balance : " + Balance);
-							}
-
-							// »óÇ°°¡°İÁ¶È¸
-							if (st.execute("SELECT Price FROM goods where Goods_Num='" + Goods_Num + "'")) {
-								rs = st.getResultSet();
-							}
-							while (rs.next()) {
-								Price = rs.getInt(1);
-								System.out.println("Price : " + Price);
-							}
-
-							// °Å·¡°¡´ÉÁ¶°Ç ÀÜ¾×>=»óÇ°°¡
-							// °áÁ¦±â´É ÁÖ¼®È­·Î Á¦°Å Ãë¼Ò.
-							if (Balance >= Price) {
-								// °Å·¡³»¿ªÃß°¡
-								st.execute("INSERT INTO transactions (User, Club_Num, Goods_Num) VALUES ('" + User
-										+ "'," + Club_Num + "," + Goods_Num + ")");
-
-								// BalanceÂ÷°¨
-								st.execute("UPDATE user set Balance=(Balance-" + Price + ") where User='" + User + "'");
-
-								// µ¿¾Æ¸® ¼öÀÍÁõ°¡
-								st.execute("UPDATE club set Income=(Income+" + Price + ") where Club_Num='" + Club_Num
-										+ "'");
-
-								//// Ãâ¼®Ã¼Å©
-								// »ç±â°Å·¡Å½Áö½Ã½ºÅÛ(FDS) 10ºĞÀÌ³»¿¡ Áßº¹ Ãâ¼®Ã¼Å© Á¦ÇÑ
-								String LastCheckTime = null;
-								java.util.Date LastCheckT = null;
-
-								if (st.execute("SELECT Time FROM atd_history where User='" + User + "'")) {
-									rs = st.getResultSet();
-								}
-								while (rs.next()) {
-									// ¸¶Áö¸· Ãâ¼®Ã¼Å© µÈ ½Ã°£ ÀúÀå (°°Àº º¯¼ö¿¡ ¸¶Áö¸·ÀÌ µÉ ¶§±îÁö ³Ö±â¶§¹®¿¡ ÃÖÁ¾ÀûÀ¸·Î´Â ¸¶Áö¸· Ãâ¼®½Ã°£ÀÌ ÀúÀåµÈ´Ù.)
-									LastCheckTime = rs.getString("Time");
-								}
-
-								// ¸¶Áö¸· Ãâ¼®Ã¼Å© µÈ ½Ã°£À» String to Date
-								SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
-										java.util.Locale.getDefault());
-								try {
-									LastCheckT = dateFormat.parse(LastCheckTime);
-								} catch (ParseException e) {
-									e.printStackTrace();
-								}
-
-								// LastCheckT¿¡ +10ºĞÇÏ±â
-								Calendar cal = Calendar.getInstance();
-								cal.setTime(LastCheckT);
-								cal.add(Calendar.MINUTE, 10);
-								LastCheckT = cal.getTime();
-
-								// ÇöÀç½Ã°£ ÃøÁ¤
-								long now = System.currentTimeMillis();
-								java.util.Date currentTime = new java.util.Date(now);
-
-								if (currentTime.compareTo(LastCheckT) > 0) {// ¸¶Áö¸· Ãâ¼®Ã¼Å© µÈ ½Ã°£ +10ºĞ º¸´Ù ÇöÀç½Ã°£ÀÌ ´õ Å¬ ¶§
-									if (st.execute("SELECT Time FROM atd_history where User='" + User
-											+ "'and Club_Num =" + Club_Num + "")) {// ÀÌ µ¿¾Æ¸®¿¡¼­ÀÇ ÇĞ»ıÀÇ °áÁ¦±â·Ï ºÒ·¯¿À±â
-										rs = st.getResultSet();
-									}
-
-									boolean isChecked = false;
-
-									while (rs.next()) {
-										isChecked = true;
-									}
-									if (!isChecked) {// ÀÌ µ¿¾Æ¸®¿¡¼­ ÀÌ ÇĞ»ıÀÌ Ãâ¼®Ã¼Å© ÇÑÀûÀÌ ¾øÀ» ¶§ (ÇÊ¿ä¼º ÀÇ¹®?)
-										st.execute("INSERT INTO atd_history (User, Club_Num) VALUES ('" + User + "', "
-												+ Club_Num + ")");
-										st.execute("UPDATE user set Visits=(Visits+1) Where User='" + User + "'");
-										st.execute(
-												"UPDATE club set Visits=(Visits+1) where Club_Num='" + Club_Num + "'");// ÇÊ¿ä¼º
-																														// ÀÇ¹®?
-									} else {// °°Àºµ¿¾Æ¸®¿¡¼­ 2È¸ÀÌ»ó Ãâ¼®Ã¼Å© ½Ãµµ
-
-									}
-								} else {// 10ºĞÀÌ³»¿¡ ¿©·¯¹ø Ãâ¼®Ã¼Å© ½Ãµµ
-
-								}
-								// °Å·¡¼º°ø
-								dos.writeInt(OP_PURCHASE_RS_SUCCESS);
-								// °Å·¡X ¿´´ø ºÎºĞ
-							} else {
-								// °Å·¡½ÇÆĞ ÀÜ¾×ºÎÁ·
-								dos.writeInt(OP_PURCHASE_RS_OVERLIMIT);
-							}
-						} else {// ÃàÁ¦½Ã°£ ÀÌ¿Ü¿¡ ¿äÃ»
-							dos.writeInt(OP_PURCHASE_RS_NOTIME);
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_ADD_ITEM) {// »óÇ°Ãß°¡
-				try {
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ »óÇ°¸í, »óÇ°°¡¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù.
-					System.out.println("Goods_Name, Price : " + readData);
-
-					if (!simplifiedFDS(School_Type)) {// ÃàÁ¦½Ã°£ ÀÌ¿ÜÀÏ ¶§
-						// ¹ŞÀº Á¤º¸¸¦ ¼­¹ö¿¡¼­ Ã³¸®ÇÒ ¼ö ÀÖµµ·Ï °¢°¢ ºĞ¸®ÇÏ¿© ÀúÀåÇÑ´Ù.
-						String Goods_Name = readData.split(":")[0];
-						int Price = Integer.parseInt(readData.split(":")[1]);
-
-						java.sql.Statement st = null;
-						st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-								ResultSet.CONCUR_READ_ONLY);
-						st.execute("INSERT INTO goods (Club_Num, Goods_Name, Price) VALUES ('" + Club_Num + "','"
-								+ Goods_Name + "','" + Price + "')");// µ¥ÀÌÅÍº£ÀÌ½º¿¡ µ¿¾Æ¸®°íÀ¯¹øÈ£, »óÇ°¸í, »óÇ°°¡·Î µ¥ÀÌÅÍ¸¦ ÀúÀåÇÑ´Ù.
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_RF_BAL) {// ÀÜ¾×, Ãâ¼®¼ö Á¶È¸ + User¸®½ºÆ®¿¡ ¾øÀ»°æ¿ì(ÆÈÂî)Ãß°¡
-				try {
-					String User = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ ¹ÙÄÚµå¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù.
-					System.out.println("User : " + readData);
-
-					java.sql.Statement st = null;
-					ResultSet rs = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-
-					if (st.execute("SELECT * FROM user where User='" + User + "'")) {// ¹ÙÄÚµå¿¡ ÀÏÄ¡ÇÏ´Â ÇĞ»ıµ¥ÀÌÅÍ ºÒ·¯¿À±â
-						rs = st.getResultSet();
-					}
-					// ÆÈÂî¹Ìµî·Ï½Ã X
-					if (!rs.next()) {// ºÒ·¯¿Â ÇĞ»ıµ¥ÀÌÅÍ°¡ ¾øÀ» ¶§
-						// User¸®½ºÆ®¿¡ Ãß°¡
-						st.execute("INSERT INTO user (User) VALUES ('" + User + "')");
-						if (st.execute("SELECT * FROM user where User='" + User + "'")) {
-							rs = st.getResultSet();
-						}
-					}
-					rs.beforeFirst();
-
-					while (rs.next()) {
-						String str = rs.getInt("Balance") + ":" + rs.getInt("Visits") + ":";
-
-						switch (rs.getString("School")) {// ³²°í,¿©°íÀÇ Ãâ¼®Ã¼Å©±âÁØÀÌ ´Ù¸£±â¶§¹®¿¡ switch¹® »ç¿ë
-						case "M":// ³²°íÀÏ ¶§
-							if (rs.getInt("Club_Num") != 0 || rs.getInt("Visits") >= 3) {// ºÎ¿øµî·ÏÀÌ µÇ¾îÀÖ°Å³ª, ºÎ½ºÀÌ¿ëÈ½¼ö°¡ 3È¸ÀÌ»óÀÏ ¶§
-								str += "1";
-							} else {
-								str += "0";
-							}
-							break;
-						case "W":// ¿©°íÀÏ ¶§
-							if (rs.getInt("Visits") >= 5) {// ºÎ½ºÀÌ¿ëÈ½¼ö°¡ 5È¸ÀÌ»óÀÏ ¶§
-								str += "1";
-							} else {
-								str += "0";
-							}
-							break;
-						}
-						System.out.println("Result : " + str);
-						dos.writeUTF(str);
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_GET_GOODS_LIST) {// »óÇ°¸ñ·ÏºÒ·¯¿À±â goodsnum,name,priceÁÖ±â
-				try {
-					java.sql.Statement st = null;
-					ResultSet rs = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-
-					if (st.execute("SELECT * FROM goods where Club_Num='" + Club_Num + "'")) {// µ¿¾Æ¸®°íÀ¯¹øÈ£¿¡ ÀÏÄ¡ÇÏ´Â »óÇ°µé ºÒ·¯¿À±â
-						rs = st.getResultSet();
-					}
-					while (rs.next()) {
-						dos.writeUTF(
-								rs.getInt("Goods_Num") + ":" + rs.getString("Goods_Name") + ":" + rs.getInt("Price"));// »óÇ°°íÀ¯¹øÈ£,
-																														// »óÇ°¸í,
-																														// »óÇ°°¡¸¦
-																														// Àü¼Û
-					}
-					dos.writeUTF(OP_GET_GOODS_LIST_FIN);// »óÇ°¸ñ·Ï Àü¼ÛÁ¾·áOPÀü¼Û
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_GET_REFUND_LIST) {// get»ç¿ëÀÚ°áÁ¦¸ñ·Ï for refund time,goodsnum,name,priceÁÖ±â
-				try {
-					String User = dis.readUTF();// ¹ÙÄÚµå
-
-					java.sql.Statement st = null;
-					ResultSet rs = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-
-					if (st.execute(
-							"SELECT * FROM transactions where Club_Num='" + Club_Num + "' and User='" + User + "'")) {
-						rs = st.getResultSet();
-					}
-
-					while (rs.next()) {
-						dos.writeUTF(rs.getString("Time") + ":" + rs.getString("Goods_Num"));
-					}
-					dos.writeUTF(OP_GET_GOODS_LIST_FIN);// »óÇ°¸ñ·ÏÀü¼ÛÁ¾·áOP
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-
-			}
-			if (readOPData == OP_REFUND) {// °áÃ¼Ãë¼Ò (+µ·º¹±¸)
-				try {
-					// ÀÌ°Å ³Ñ¹ö¸µÀ¸·Î
-					readData = dis.readUTF();// °Å·¡ ¹øÈ£
-
-					java.sql.Statement st = null;
-					ResultSet rs = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-					rs = st.executeQuery("SHOW DATABASES");
-
-					String temp[] = null;// ±âÃë¼Ò¿©ºÎ:¹ÙÄÚµå:»óÇ°°¡
-
-					// ÀÌ¹ÌÃë¼ÒµÈ°áÁ¦ÀÎÁö È®ÀÎ
-					if (st.execute("SELECT Cancel FROM transactions where Num='" + readData + "'")) {
-						rs = st.getResultSet();
-					}
-					while (rs.next()) {
-						temp[0] = rs.getNString(1);
-						System.out.println(temp[0]);
-					}
-
-					if (temp[0].length() == 0) {
-						// NumÀ»ÅëÇØ user¹ÙÄÚµåÈ®ÀÎ
-						if (st.execute("SELECT User FROM transactions where Num='" + readData + "'")) {
-							rs = st.getResultSet();
-						}
-						while (rs.next()) {
-							temp[1] = rs.getNString(1);
-							System.out.println(temp[1]);
-						}
-
-						// NumÀ»ÅëÇØ °¡°İÈ®ÀÎ
-						if (st.execute("SELECT Price FROM transactions where Num='" + readData + "'")) {
-							rs = st.getResultSet();
-						}
-						while (rs.next()) {
-							temp[2] = rs.getNString(1);
-							System.out.println(temp[2]);
-						}
-
-						// °Å·¡Ãë¼ÒÇ¥½Ã
-						if (st.execute("UPDATE transactions set Cancel = '1' where Num='" + readData + "'"))
-							;
-
-						// Balance º¹±¸
-						if (st.execute(
-								"UPDATE user set Balance = (Balance-" + temp[2] + " where User='" + temp[1] + "'"))
-							;
-					} else {
-						dos.writeInt(101);// ÀÌ¹Ì Ãë¼ÒµÈ °áÁ¦
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_ATD) {// Ãâ¼®Ã¼Å© ºÎ¿øµî·Ï
-				try {
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ ¹ÙÄÚµåÁ¤º¸¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù.
-					java.sql.Statement st = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-					System.out.println("OP_ATD : " + readData);
-					st.execute("UPDATE user set Club_Num='" + Club_Num + "' where User='" + readData + "'");// ¹ÙÄÚµå¿¡ ÀÏÄ¡ÇÏ´Â
-																											// ÇĞ»ı¿¡ µ¿¾Æ¸®
-																											// °íÀ¯¹øÈ£ÀúÀåÇÏ±â
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_EDIT_GOODS) {// »óÇ°¸ñ·Ïº¯°æ
-				try {
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ »óÇ°°íÀ¯¹øÈ£, »óÇ°¸í, °¡°İÀ» "readData"¿¡ ÀúÀåÇÑ´Ù.
-
-					if (!simplifiedFDS(School_Type)) {// ÃàÁ¦½Ã°£ ÀÌ¿ÜÀÏ ¶§
-						int Goods_Num = Integer.parseInt(readData.split(":")[0]);
-						String Goods_Name = readData.split(":")[1];
-						int Price = Integer.parseInt(readData.split(":")[2]);
-
-						java.sql.Statement st = null;
-						st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-								ResultSet.CONCUR_READ_ONLY);
-
-						System.out.println(readData);
-
-						st.execute("UPDATE goods set Goods_Name='" + Goods_Name + "', Price='" + Price
-								+ "' where Goods_Num='" + Goods_Num + "'");
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_DELETE_GOODS) {// »óÇ°»èÁ¦
-				try {
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ »óÇ°°íÀ¯¹øÈ£¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù.
-					System.out.println(readData);
-
-					if (!simplifiedFDS(School_Type)) {// ÃàÁ¦½Ã°£ ÀÌ¿ÜÀÏ ¶§
-						java.sql.Statement st = null;
-						st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-								ResultSet.CONCUR_READ_ONLY);
-
-						st.execute("DELETE From goods where Goods_Num='" + readData + "'");
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_EDIT_PW) {// ÆĞ½º¿öµå º¯°æ
-				try {
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ º¯°æÇÒ ÆĞ½º¿öµå¸¦ "readData"¿¡ ÀúÀåÇÑ´Ù.
-					System.out.println("after pw: " + readData);
-
-					java.sql.Statement st = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-
-					st.execute("UPDATE club set PW='" + readData + "' where Club_Num='" + Club_Num + "'");// ÆĞ½º¿öµå¸¦ º¯°æÇÑ´Ù.
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_GET_NAME) {// ÀÌ¸§Á¶È¸
-				try {
-					String User = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ ¹ÙÄÚµåÀ» "readData"¿¡ ÀúÀåÇÑ´Ù.
-					System.out.println("User : " + readData);
-
-					java.sql.Statement st = null;
-					ResultSet rs = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-
-					if (st.execute("SELECT Name FROM user where User='" + User + "'")) {// ¹ÙÄÚµå¿¡ ÀÏÄ¡ÇÏ´Â ÇĞ»ı¸í ºÒ·¯¿À±â
-						rs = st.getResultSet();
-					}
-
-					while (rs.next()) {
-						String str = rs.getNString(1);
-						if (str != null) {// nullÀÌ ¾Æ´Ò ¶§
-							dos.writeUTF(str);// ÀÌ¸§°ªÀ» Àü¼ÛÇÑ´Ù.
-						} else {
-							dos.writeUTF("lookup error!");// "lookup error!"ÀÌ¶ó°í Àü¼ÛÇÑ´Ù.
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_USER_MATCHING) {// À¯Àú¸ÅÄª
-				try {
-					readData = dis.readUTF();// Å¬¶óÀÌ¾ğÆ®°¡ º¸³½ ¹ÙÄÚµå, ÇĞ¹ø, ÇĞ±³±¸ºĞ °ªÀ» "readData"¿¡ ÀúÀåÇÑ´Ù.
-					// ¹ŞÀº Á¤º¸¸¦ ¼­¹ö¿¡¼­ Ã³¸®ÇÒ ¼ö ÀÖµµ·Ï °¢°¢ ºĞ¸®ÇÏ¿© ÀúÀåÇÑ´Ù.
-					String Barcode = readData.split(":")[0];
-					String Student_ID = readData.split(":")[1];
-					String Type = readData.split(":")[2];
-					String Grade = Student_ID.substring(0, 1);
-					String Class = Student_ID.substring(1, 3);
-					String Number = Student_ID.substring(3);
-					System.out.println("User : " + Barcode);
-					System.out.println("Student_ID : " + Grade + ":" + Class + ":" + Number);
-
-					java.sql.Statement st = null;
-					ResultSet rs = null;
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-
-					switch (Type) {
-					case "1":// ³²°íÀÏ ¶§
-						st.execute("UPDATE user set User='" + Barcode + "' where Grade='" + Grade + "' and Class='"
-								+ Class + "' and Number='" + Number + "' and School='M'");
-						break;
-					case "2":// ¿©°íÀÏ ¶§
-						st.execute("UPDATE user set User='" + Barcode + "' where Grade='" + Grade + "' and Class='"
-								+ Class + "' and Number='" + Number + "' and School='W'");
-						break;
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == OP_BALANCE_CHARGE) {
-				// ÀÜ¾× ÃæÀü½Ã ÄÚµå
-				// user:wtbalanceÇü½ÄÀ¸·Î dis;
-				try {
-					readData = dis.readUTF();
-
-					String User = readData.split(":")[0];
-					String wtbalance = readData.split(":")[1];
-
-					java.sql.Statement st = null;
-					//ResultSet rs = null; ¹Ş¾Æ¿Ã ÇÊ¿ä°¡ ¾øÀ¸´Ï ResultSetÀº ÇÊ¿ä ¾øÀ»Áöµµ? Àß ¸ğ¸£°ÚÀ½. 
-					st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-					
-					System.out.println("User : " + User);
-					System.out.println("Balance : " + wtbalance);
-					
-					if (User.equals("null")) {// ¹ÙÄÚµåµ¥ÀÌÅÍ°¡ nullÀÏ ¶§
-						dos.writeInt(OP_CHARGE_RS_USERNULL);
-					} else {
-						st.execute("UPDATE user set Balance=(Balance+" + wtbalance + ") where User='" + User + "'");
-						dos.writeInt(OP_CHARGE_RS_SUCCESS);
-					}
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (SQLException ex) {
-					Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			if (readOPData == 1110) {// exit
-				try {
-					dos.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				try {
-					dis.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				CheongwonPayServer.userList.remove(this);
-			}
-		}
-	}
-}
