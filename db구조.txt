@@ -1,5 +1,0 @@
-user : Balance, Visits, User(바코드), Club_Num, Name, Grade, Class, Number, School, Num
-transactions : User, Club_Num, Goods_Num, Cancel, Price, Num
-club : Name, Income, Club_Num, Visits, PW
-goods : Goods_Num, Club_Num, Goods_Name, Price
-atd_history : Time, User, Club_Num
