@@ -62,10 +62,10 @@ public class CheongwonPayServer {
 class User extends Thread {
 
 	public static final int OP_LOGIN = 1, OP_PURCHASE = 2, OP_ADD_ITEM = 3, OP_RF_BAL = 4, OP_GET_GOODS_LIST = 5,
-			OP_GET_REFUND_LIST = 6, OP_REFUND = 7, OP_ADD_MEMBER = 10, OP_EDIT_GOODS = 11, OP_DELETE_GOODS = 12, OP_EDIT_PW = 13,
-			OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_CHARGE = 16, OP_CHANGEINFO = 17, OP_CLUB_INCOME = 18,
-			OP_PAYBACK = 19, OP_PURCHASE_RS_NOTIME = 103, OP_PURCHASE_RS_OVERLIMIT = 104, OP_PURCHASE_RS_USERNULL = 106,
-			OP_PURCHASE_RS_SUCCESS = 105, OP_EXIT = 1110;// 통신시
+			OP_GET_REFUND_LIST = 6, OP_REFUND = 7, OP_ADD_MEMBER = 10, OP_EDIT_GOODS = 11, OP_DELETE_GOODS = 12,
+			OP_EDIT_PW = 13, OP_GET_NAME = 14, OP_USER_MATCHING = 15, OP_CHARGE = 16, OP_CHANGEINFO = 17,
+			OP_CLUB_INCOME = 18, OP_PAYBACK = 19, OP_LOST_REPORT = 20, OP_CANCEL_LOST = 21, OP_PURCHASE_RS_NOTIME = 103,
+			OP_PURCHASE_RS_OVERLIMIT = 104, OP_PURCHASE_RS_USERNULL = 106, OP_PURCHASE_RS_SUCCESS = 105, OP_EXIT = 1110;// 통신시
 	// 이용하는
 	// 명령
 	// 코드(OP-Code)를
@@ -117,6 +117,7 @@ class User extends Thread {
 
 			if (readOPData == OP_LOGIN) {// 로그인
 				System.out.println(" : OP_LOGIN");
+
 				try {
 
 					String Club_Name = null;
@@ -136,6 +137,7 @@ class User extends Thread {
 
 			if (readOPData == OP_PURCHASE) {// 거래, 출석체크
 				System.out.println(" : OP_PURCHASE");
+
 				try {
 					int result = dbHandler.purchase(dis.readUTF());
 					if (result != -1) {
@@ -148,6 +150,7 @@ class User extends Thread {
 
 			if (readOPData == OP_ADD_ITEM) {// 상품추가
 				System.out.println(" : OP_ADD_ITEM");
+
 				try {
 					dbHandler.addItem(dis.readUTF());
 				} catch (IOException e) {
@@ -157,6 +160,7 @@ class User extends Thread {
 
 			if (readOPData == OP_RF_BAL) {// 잔액, 출석수 조회 + User리스트에 없을경우(팔찌)추가
 				System.out.println(" : OP_RF_BAL");
+
 				try {
 					int result = dbHandler.getBalance(dis.readUTF());
 					dos.writeInt(result);
@@ -167,6 +171,7 @@ class User extends Thread {
 
 			if (readOPData == OP_GET_GOODS_LIST) {// 상품목록불러오기 goodsnum,name,price주기
 				System.out.println(" : OP_GET_GOODS_LIST");
+
 				try {
 					String[] goodsList = dbHandler.getGoodsList();
 					for (String nextGood : goodsList) {
@@ -179,6 +184,7 @@ class User extends Thread {
 
 			if (readOPData == OP_GET_REFUND_LIST) {// get사용자결제목록 for refund time,goodsnum,name,price주기
 				System.out.println(" : OP_GET_REFUND_LIST");
+
 				try {
 					String[] refundList = dbHandler.getRefundList(dis.readUTF());
 					for (String nextList : refundList) {
@@ -191,6 +197,7 @@ class User extends Thread {
 			}
 			if (readOPData == OP_REFUND) {// 결체취소 (+돈복구)
 				System.out.println(" : OP_REFUND");
+
 				try {
 					dbHandler.refund(dis.readUTF());
 				} catch (IOException e) {
@@ -200,6 +207,7 @@ class User extends Thread {
 
 			if (readOPData == OP_EDIT_GOODS) {// 상품목록변경
 				System.out.println(" : OP_EDIT_GOODS");
+
 				try {
 					dbHandler.edit_goods(dis.readUTF());
 				} catch (IOException e) {
@@ -209,6 +217,7 @@ class User extends Thread {
 
 			if (readOPData == OP_DELETE_GOODS) {// 상품삭제
 				System.out.println(" : OP_DELETE_GOODS");
+
 				try {
 					dbHandler.delete_goods(dis.readUTF());
 				} catch (IOException e) {
@@ -218,6 +227,7 @@ class User extends Thread {
 
 			if (readOPData == OP_EDIT_PW) {// 패스워드 변경
 				System.out.println(" : OP_EDIT_PW");
+
 				try {
 					dbHandler.edit_password(dis.readUTF());
 				} catch (IOException e) {
@@ -227,6 +237,7 @@ class User extends Thread {
 
 			if (readOPData == OP_GET_NAME) {// 이름조회
 				System.out.println(" : OP_GET_NAME");
+
 				try {
 					String result = dbHandler.get_username(dis.readUTF());
 					dos.writeUTF(result);
@@ -238,6 +249,7 @@ class User extends Thread {
 
 			if (readOPData == OP_CHARGE) {
 				System.out.println(" : OP_CHARGE");
+
 				try {
 					dbHandler.charge(dis.readUTF());
 				} catch (IOException e) {
@@ -247,6 +259,7 @@ class User extends Thread {
 
 			if (readOPData == OP_CHANGEINFO) {
 				System.out.println(" : OP_CHANGEINFO");
+
 				try {
 					dbHandler.change_info(dis.readUTF());
 				} catch (IOException e) {
@@ -255,6 +268,7 @@ class User extends Thread {
 			}
 			if (readOPData == OP_CLUB_INCOME) {
 				System.out.println(" : OP_CLUB_INCOME");
+
 				try {
 					int result = dbHandler.get_club_income();
 					dos.writeInt(result);
@@ -265,18 +279,41 @@ class User extends Thread {
 
 			if (readOPData == OP_PAYBACK) {
 				System.out.println(" : OP_PAYBACK");
+
 				try {
 					dbHandler.payback(dis.readUTF());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
-			
+
 			if (readOPData == OP_ADD_MEMBER) {
 				System.out.println(" : OP_ADD_MEMBER");
-				
+
 				try {
 					dbHandler.add_member(dis.readUTF());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if (readOPData == OP_LOST_REPORT) {
+				System.out.println(" : OP_LOST_REPORT");
+
+				try {
+					int result = dbHandler.lost_report(dis.readUTF());
+					dos.writeInt(result);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			if (readOPData == OP_CANCEL_LOST) {
+				System.out.println(" : OP_CANCEL_LOST");
+				
+				try {
+					int result = dbHandler.cancel_lost(dis.readUTF());
+					dos.writeInt(result);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -713,10 +750,20 @@ class CheongwonPayDB {
 			}
 
 			while (rs.next()) {
-				String str = rs.getNString(1);
+				String str = rs.getString(1);
 				if (str != null) {// null이 아닐 때
 					toReturn = str;// 이름값을 전송한다.
 				}
+			}
+
+			if (st.execute("SELECT Lost FROM user WHERE User='" + readData + "'")) {// 분실여부 확인
+				rs = st.getResultSet();
+			}
+
+			rs.next();
+			int lost = rs.getInt(1);
+			if (toReturn != null) {
+				toReturn = String.join(":", Integer.toString(lost), toReturn);
 			}
 
 			st.close();
@@ -805,17 +852,84 @@ class CheongwonPayDB {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
 	void add_member(String readData) {
 		try {
 			java.sql.Statement st = null;
 			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			System.out.println("OP_ATD : " + readData);
 			st.execute("UPDATE user SET Club_Num='" + Club_Num + "' WHERE User='" + readData + "'");
+
+			st.close();
+		} catch (SQLException ex) {
+			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	int lost_report(String readData) {
+		int toReturn = -1;
+
+		try {
+			java.sql.Statement st = null;
+			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			String name = readData.split(":")[0];
+			String school = readData.split(":")[1];
+			int grade = Integer.parseInt(readData.split(":")[2]);
+			int num_class = Integer.parseInt(readData.split(":")[3]);
+			int number = Integer.parseInt(readData.split(":")[4]);
+			ResultSet rs = null;
+
+			if (st.execute("SELECT Lost,Num FROM user WHERE Name='" + name + "' AND School='" + school + "' AND Grade="
+					+ grade + " AND Class=" + num_class + " AND Number=" + number)) {
+				rs = st.getResultSet();
+			}
+			if (rs.next()) {
+				int isLost = rs.getInt("Lost");
+				if (isLost == 1) {
+					toReturn = 1;
+				}
+				else {
+					st.execute("UPDATE user SET Lost=1 WHERE Num=" + rs.getInt("Num"));
+					toReturn = 0;
+				}
+			}
+			
+			st.close();
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (SQLException ex) {
+			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		
+		return toReturn;
+	}
+
+	int cancel_lost(String readData) {
+		int toReturn = -1;
+		
+		try {
+			java.sql.Statement st = null;
+			st = CheongwonPayServer.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			ResultSet rs = null;
+			
+			if (st.execute("SELECT Lost FROM user WHERE User='" + readData + "'")) {
+				rs = st.getResultSet();
+			}
+			if (rs.next()) {
+				int isLost = rs.getInt("Lost");
+				if(isLost == 0) {
+					toReturn = 1;
+				}
+				else {
+					st.execute("UPDATE user SET Lost=0 WHERE User='" + readData + "'");
+					toReturn = 0;
+				}
+			}
 			
 			st.close();
 		} catch (SQLException ex) {
 			Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
 		}
+		return toReturn;
 	}
 }
