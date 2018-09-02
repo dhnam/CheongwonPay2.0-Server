@@ -138,10 +138,12 @@ class User extends Thread {
 					try {
 						String input = dis.readUTF();
 						String user = input.split(":")[0];
-						dbHandler.set_atd(user);
 						int result = dbHandler.purchase(input);
 						if (result != -1) {
 							dos.writeInt(result);
+						}
+						if (result == OP_RS_SUCCESS) {
+							dbHandler.set_atd(user);
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
